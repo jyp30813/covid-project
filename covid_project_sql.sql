@@ -1,6 +1,18 @@
+-- We investigate the covid-19 pandemic in the shoes of a hospital in Singapore, 
+-- analyzing bottlenecks of hospitals and the degree to which they were strained.
+
+
+-- Beginning from querying certain data from the dataset. 
 -- Possible bottlenecks: hospital bed occupancy, mortuary occupancy
+-- Questions:
+	-- 1. What were the ICU Bed occupancy rates due to covid-19?
+	-- 2. Which countries experienced high influx of hospitalized patients(>9%)? 
+	-- 3. Which countries have similar demographics, policies, and standard of living to Singapore?
+
 
 -- 1. What were the ICU Bed occupancy rates due to covid-19?
+	-- Create temp table ICUBedOcc, find the bed occupancy rate by dividing hospitalization rate (icu patients + hospitalized patients)
+	-- by total hospital beds in the country.
 
 drop table if exists ICUBedOcc;
 create temp table ICUBedOcc
@@ -26,6 +38,8 @@ where hospital_beds is not null;
 
 
 -- 2. Which countries experienced high influx of hospitalized patients(>9%)? 
+	-- Create view with maximum bed occupancy rates due to covid-19. View to be visualized in Tableau.
+	
 drop view if exists MaxBedOcc;
 create view MaxBedOcc as
 select location, MAX(Bed_Occupancy) as MaxBedOccupancy
@@ -46,8 +60,12 @@ on mbo.location = bod.location and mbo.MaxBedOccupancy = bod.Bed_Occupancy
 
 
 -- 3. Which countries have similar demographics, policies, and standard of living to Singapore?
--- the k-meams clustering with euclidean distance method of measuring similarity will be used
+	-- Resulting view will be further analyzed in Python with Pandas.
+	-- Pandas k-meams clustering will be used, with parameters: stringency index (policy strictness in containing the coronavirus),
+	-- population density, elderly population, gdp per capita, and human development index.
 
+	-- NOTE: to use clustering, data had to be normalized, and for simplicity have the same number of rows.
+	-- Some countries lacked data on certain dates, therefore three datasets were extracted to negate the date variable: average, maximum, and minimum of all variables
 drop view if exists Similarity_data;
 create view Similarity_data as
 select location, date,
@@ -111,8 +129,10 @@ join max_similarity_data as max on avg.location = max.c_location;
 
 
 
-
--- 4. how long did it take countries like Singapore to reach critical points in capacity? how long until returning to acceptable levels?
+-- 4. How long did it take countries like Singapore to reach critical points in capacity? how long until returning to acceptable levels?
+	-- This step is done after the clustering in Pandas is complete. 
+	-- Queried data will be visualized in Tableau to indicate how often hospitals in countries like Singapore experienced
+	-- stringency in hospital occupation rates and how long it took them to return to normal levels. 
 
 select location, Bed_Occupancy, date
 from ICUBedOcc
